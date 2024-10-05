@@ -49,7 +49,7 @@ export const loginUser: RequestHandler = async (req, res, next)  => {
     }
 };
 
-export function refreshAccessToken: RequestHandler = (req, res, next) {
+export function refreshAccessToken: RequestHandler = (req, res, next) => {
 
     const { refreshToken } = req.body;
 
