@@ -1,9 +1,13 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { RequestHandler } from 'express';
 import { createUser, getUserByEmail } from '../models/userModel'
 import bcrypt from 'bcrypt'
-const jwt = require('jsonwebtoken');
-const SECRET = 'lucastoki'
-const refresh_secret = 'lucastoki-refresh'
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
+
+dotenv.config();
+
+const SECRET = process.env.SECRET!;
+const REFRESH_SECRET = process.env.REFRESH_SECRET!;
 
 export const registerUser: RequestHandler = async (req, res, next) => {
     try {
@@ -39,8 +43,8 @@ export const loginUser: RequestHandler = async (req, res, next)  => {
             return;
         }
 
-        const accessToken = jwt.sign({userId: user.id}, SECRET, {expiresIn: 10800})
-        const refreshToken = jwt.sign({userId: user.id}, refresh_secret, {expiresIn: 604800 })
+        const accessToken = jwt.sign({userId: user.id}, SECRET, {expiresIn: '3h'});
+        const refreshToken = jwt.sign({userId: user.id}, REFRESH_SECRET, {expiresIn: '7d' });
 
         res.status(200).json({message: 'Login bem sucedido', refreshToken , accessToken });
         return;
@@ -49,21 +53,22 @@ export const loginUser: RequestHandler = async (req, res, next)  => {
     }
 };
 
-export function refreshAccessToken: RequestHandler = (req, res, next) => {
-
+export const refreshAccessToken: RequestHandler = (req, res, next) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-        return res.status(401).json({ error: 'Token de atualização não fornecido' });
+        res.status(401).json({ error: 'Token de atualização não fornecido' });
+        return;
     }
 
     try {
-        const decoded = jwt.verify(refreshToken, refresh_secret);
-        const accessToken = jwt.sign({ userId: decoded.userId }, SECRET, { expiresIn: 10800 });
+        const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as jwt.JwtPayload;
+        const accessToken = jwt.sign({ userId: decoded.userId }, SECRET, { expiresIn: '3h' });
 
         res.status(200).json({ accessToken });
 
     } catch (error) {
-        return res.status(403).json({ error: 'Refresh token inválido ou expirado' });
+        res.status(403).json({ error: 'Refresh token inválido ou expirado' });
+        return;
     }
 }
