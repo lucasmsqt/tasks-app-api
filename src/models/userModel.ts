@@ -10,7 +10,7 @@ export const createUser = async (user: User) => {
     return result.rows[0]
 };
 
-export const getUserByEmail = async (email: string, p0: any) => {
+export const getUserByEmail = async (email: string) => {
     const result = await pool.query('SELECT * FROM auth.users WHERE email = $1', [email]);
     return result.rows[0]
 };
